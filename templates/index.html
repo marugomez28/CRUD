@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Docker - Usuarios</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        .btn-del { background-color: #dc3545; padding: 5px; width: auto; }
+        .btn-edit { background-color: #ffc107; padding: 5px; width: auto; color: black; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Gestión de Usuarios</h2>
+    
+    <form id="formUsuario">
+        <!-- Campo oculto para guardar el ID cuando estamos editando -->
+        <input type="hidden" id="userId">
+        <input type="text" id="nombre" placeholder="Nombre completo" required>
+        <input type="email" id="email" placeholder="Correo electrónico" required>
+        <button type="submit" id="btnSubmit">Guardar Usuario</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="tablaUsuarios"></tbody>
+    </table>
+
+    <script>
+        // Cargar usuarios
+        function cargarUsuarios() {
+            fetch('/usuarios')
+            .then(res => res.json())
+            .then(data => {
+                const tabla = document.getElementById('tablaUsuarios');
+                tabla.innerHTML = '';
+                data.forEach(user => {
+                    tabla.innerHTML += `<tr>
+                        <td>${user.id}</td>
+                        <td>${user.nombre}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editarUsuario(${user.id}, '${user.nombre}', '${user.email}')">Editar</button>
+                            <button class="btn-del" onclick="eliminarUsuario(${user.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+                });
+            });
+        }
+
+        // Preparar formulario para editar
+        function editarUsuario(id, nombre, email) {
+            document.getElementById('userId').value = id;
+            document.getElementById('nombre').value = nombre;
+            document.getElementById('email').value = email;
+            document.getElementById('btnSubmit').innerText = 'Actualizar Usuario';
+            document.getElementById('btnSubmit').style.backgroundColor = '#007bff';
+        }
+
+        // Crear o Actualizar un usuario
+        document.getElementById('formUsuario').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('userId').value;
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+
+            // Si hay un ID en el campo oculto, usamos PUT para actualizar; si no, POST para crear
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/usuarios/${id}` : '/usuarios';
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nombre, email})
+            }).then(() => {
+                document.getElementById('formUsuario').reset();
+                document.getElementById('userId').value = '';
+                document.getElementById('btnSubmit').innerText = 'Guardar Usuario';
+                document.getElementById('btnSubmit').style.backgroundColor = '#28a745';
+                cargarUsuarios();
+            });
+        });
+
+        // Eliminar un usuario
+        function eliminarUsuario(id) {
+            fetch(`/usuarios/${id}`, { method: 'DELETE' })
+            .then(() => cargarUsuarios());
+        }
+
+        cargarUsuarios();
+    </script>
+</body>
+</html>

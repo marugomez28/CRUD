@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db_mysql:
+    image: mysql:8.0
+    container_name: db_mysql_crud
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: crud_db
+      MYSQL_USER: crud_user
+      MYSQL_PASSWORD: crudpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql # Persistencia para MySQL
+
+  web_app:
+    build: .
+    container_name: python_crud_app
+    ports:
+      - "5000:5000"
+    environment:
+     
+      - DATABASE_URL=mysql+pymysql://crud_user:crudpassword@db_mysql:3306/crud_db
+    volumes:
+      - ./data:/app/data # Persistencia para SQLite (si se usa)
+    depends_on:
+      - db_mysql
+
+volumes:
+  mysql_data:
